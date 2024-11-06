@@ -69,6 +69,10 @@ export const CartContextProvider = (props) => {
     });
   };
 
+  const clearCart = () => {
+    dispatch({ type: 'CLEAR_CART' });
+  };
+
   console.log(cartState);
 
   return (
@@ -77,6 +81,7 @@ export const CartContextProvider = (props) => {
         productsInCart: cartState.productsInCart,
         totalQuantity: cartState.totalQuantity,
         addCart,
+        clearCart,
       }}
     >
       {props.children}
