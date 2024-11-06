@@ -7,22 +7,25 @@ import MemberCreate from './components/MemberCreate';
 import LoginPage from './components/LoginPage';
 import { AuthContextProvider } from './context/UserContext';
 import ProductList from './components/ProductList';
+import { CartContextProvider } from './context/CartContext';
 
 function App() {
   return (
     <AuthContextProvider>
-      <div className='App'>
-        <Header />
-        <div className='content-wrapper'>
-          <Routes>
-            <Route path='/' element={<Home />} />
-            <Route path='/member/create' element={<MemberCreate />} />
-            <Route path='/login' element={<LoginPage />} />
-            <Route path='/product/list' element={<ProductList />} />
-          </Routes>
+      <CartContextProvider>
+        <div className='App'>
+          <Header />
+          <div className='content-wrapper'>
+            <Routes>
+              <Route path='/' element={<Home />} />
+              <Route path='/member/create' element={<MemberCreate />} />
+              <Route path='/login' element={<LoginPage />} />
+              <Route path='/product/list' element={<ProductList />} />
+            </Routes>
+          </div>
+          <Footer />
         </div>
-        <Footer />
-      </div>
+      </CartContextProvider>
     </AuthContextProvider>
   );
 }

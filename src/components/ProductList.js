@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react';
 import AuthContext from '../context/UserContext';
+import CartContext from '../context/CartContext';
 
 const ProductList = ({ pageTitle }) => {
   const [searchType, setSearchType] = useState('optional');
@@ -25,6 +26,7 @@ const ProductList = ({ pageTitle }) => {
   const [selected, setSelected] = useState({});
 
   const { userRole } = useContext(AuthContext);
+  const { addCart } = useContext(CartContext);
   const isAdmin = userRole === 'ADMIN';
 
   useEffect(() => {
@@ -73,6 +75,7 @@ const ProductList = ({ pageTitle }) => {
 
     if (confirm('상품을 장바구니에 추가하시겠습니까?')) {
       // 카트로 상품을 보내주자.
+      finalSelected.forEach((product) => addCart(product));
       alert('선택한 상품이 장바구니에 추가되었습니다.');
     }
   };
@@ -176,7 +179,6 @@ const ProductList = ({ pageTitle }) => {
                   {!isAdmin && (
                     <TableCell>
                       <TextField
-                        min={0}
                         type='number'
                         value={product.quantity || 0}
                         onChange={(e) =>
@@ -192,6 +194,12 @@ const ProductList = ({ pageTitle }) => {
                           )
                         }
                         style={{ width: '70px' }}
+                        InputProps={{
+                          inputProps: {
+                            min: 0,
+                            max: product.stockQuantity,
+                          },
+                        }}
                       />
                     </TableCell>
                   )}
