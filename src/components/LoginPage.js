@@ -43,6 +43,11 @@ const LoginPage = () => {
       navigate('/');
     } catch (e) {
       console.log(e);
+      // 옵셔널 체이닝 (optional chaining)
+      // 특정 객체나 속성이 null 또는 undefined인지 확인하고 안전하게 접근할 수 있게 도와줌.
+      // 논리 연산자와 연계하여 옵셔널 체이닝이 falsy한 값일 경우 대체할 수 있는 값을 지정.
+      const errorMessage = e.response?.data?.statusMessage || '로그인 실패!';
+      alert(errorMessage);
     }
 
     /*
