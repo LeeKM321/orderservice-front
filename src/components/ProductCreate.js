@@ -9,12 +9,14 @@ import {
 } from '@mui/material';
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axiosInstance from '../configs/axios-config';
 
 const ProductCreate = () => {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [price, setPrice] = useState('');
   const [stockQuantity, setStockQuantity] = useState('');
+  const [imageThumbnail, setImageThumbnail] = useState(null);
   const [productImage, setProductImage] = useState(null);
   const navigate = useNavigate();
 
@@ -22,19 +24,42 @@ const ProductCreate = () => {
   const $fileTag = useRef();
 
   // form submit handler
-  const productCreate = (e) => {
+  const productCreate = async (e) => {
     e.preventDefault();
+
+    try {
+      const registerData = new FormData();
+      registerData.append('name', name);
+      registerData.append('category', category);
+      registerData.append('price', price);
+      registerData.append('stockQuantity', stockQuantity);
+      registerData.append('productImage', productImage);
+
+      await axiosInstance.post(
+        `${process.env.REACT_APP_API_BASE_URL}/product/create`,
+        registerData,
+        {
+          headers: {
+            'Content-type': 'multipart/form-data',
+          },
+        },
+      );
+
+      alert('상품 등록 완료!');
+      navigate('/product/list');
+    } catch (e) {}
   };
 
   const fileUpdate = (e) => {
     // 첨부된 파일 정보 읽기
     const file = $fileTag.current.files[0];
+    setProductImage(file);
 
     const reader = new FileReader();
     reader.readAsDataURL(file);
 
     reader.onloadend = () => {
-      setProductImage(reader.result);
+      setImageThumbnail(reader.result);
     };
   };
 
@@ -48,11 +73,15 @@ const ProductCreate = () => {
               <form onSubmit={productCreate}>
                 <div
                   className='thumbnail-box'
-                  style={{ display: 'flex', justifyContent: 'center' }}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                  }}
                   onClick={() => $fileTag.current.click()}
                 >
                   <img
-                    src={productImage || require('../assets/image-add.png')}
+                    style={{ maxWidth: '225px' }}
+                    src={imageThumbnail || require('../assets/image-add.png')}
                     alt='prod-image'
                   />
                 </div>

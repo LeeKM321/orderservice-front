@@ -18,30 +18,60 @@ import {
 import React, { useContext, useEffect, useState } from 'react';
 import AuthContext from '../context/UserContext';
 import CartContext from '../context/CartContext';
+import axios from 'axios';
 
 const ProductList = ({ pageTitle }) => {
   const [searchType, setSearchType] = useState('optional');
   const [searchValue, setSearchValue] = useState('');
   const [productList, setProductList] = useState([]);
   const [selected, setSelected] = useState({});
+  const [currentPage, setCurrentPage] = useState(0);
+  const [isLastPage, setLastPage] = useState(false);
+  const pageSize = 25;
 
   const { userRole } = useContext(AuthContext);
   const { addCart } = useContext(CartContext);
   const isAdmin = userRole === 'ADMIN';
 
   useEffect(() => {
-    loadProduct();
+    loadProduct(); // 처음 화면에 진입하면 1페이지 내용을 불러오자
+    window.addEventListener('scroll', scrollPagination);
   }, []);
 
   // 상품 목록을 백엔드에 요청하는 함수
-  const loadProduct = async (number, size) => {
-    const res = await fetch(
-      `${process.env.REACT_APP_API_BASE_URL}/product/list`,
-    );
-    const data = await res.json();
-    // console.log(data.result);
+  const loadProduct = async () => {
+    let params = {
+      size: pageSize,
+      number: currentPage,
+    };
 
-    setProductList(data.result);
+    const res = await axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/product/list`,
+      { params },
+    );
+    const data = res.data;
+    console.log(data.result);
+
+    const additionalData = data.result.content.map((p) => ({
+      ...p,
+      quantity: 0,
+    }));
+
+    if (additionalData.length === 0) {
+      setLastPage(true);
+    } else {
+      setProductList((prevList) => [...prevList, ...additionalData]);
+      setCurrentPage((prevPage) => prevPage + 1);
+    }
+  };
+
+  const scrollPagination = () => {
+    // 브라우저 창의 높이 + 현재 스크롤된 위치 >= 페이지 전체 높이에서 200px 이내에 도달했는가?
+    const isBottom =
+      window.innerHeight + window.scrollY >= document.body.offsetHeight - 200;
+    if (isBottom && !isLastPage) {
+      loadProduct();
+    }
   };
 
   // 장바구니 클릭 이벤트 핸들러
