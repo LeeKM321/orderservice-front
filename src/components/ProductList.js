@@ -19,6 +19,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import AuthContext from '../context/UserContext';
 import CartContext from '../context/CartContext';
 import axios from 'axios';
+import { throttle } from 'lodash';
 
 const ProductList = ({ pageTitle }) => {
   const [searchType, setSearchType] = useState('optional');
@@ -27,6 +28,8 @@ const ProductList = ({ pageTitle }) => {
   const [selected, setSelected] = useState({});
   const [currentPage, setCurrentPage] = useState(0);
   const [isLastPage, setLastPage] = useState(false);
+  // 현재 로딩중이냐? -> 백엔드로부터 상품 목록 요청을 보내서 데이터를 받아오는 중인가?
+  const [isLoading, setIsLoading] = useState(false);
   const pageSize = 25;
 
   const { userRole } = useContext(AuthContext);
@@ -35,42 +38,70 @@ const ProductList = ({ pageTitle }) => {
 
   useEffect(() => {
     loadProduct(); // 처음 화면에 진입하면 1페이지 내용을 불러오자
-    window.addEventListener('scroll', scrollPagination);
+    // 쓰로틀링: 짧은 시간동안 연속해서 발생한 이벤트들을 일정 시간으로 그룹화 하여
+    // 마지막 이벤트 핸들러만 호출하게 하는 기능. -> 스크롤 페이징
+    // 디바운싱: 짧은 시간동안 연속해서 발생한 이벤트를 호출하지 않다가 마지막 이벤트로부터
+    // 일정 시간 이후에 한번만 호출하게 하는 기능. -> 입력값 검증
+    const throttledScroll = throttle(scrollPagination, 1000);
+    window.addEventListener('scroll', throttledScroll);
+
+    // 클린업 함수: 다른 컴포넌트가 렌더링 될 때 이벤트 해제.
+    return () => window.removeEventListener('scroll', throttledScroll);
   }, []);
+
+  // useEffect는 하나의 컴포넌트에서 여러 개 선언이 가능합니다.
+  // 스크롤 이벤트에서 다음 페이지 번호를 준비했고,
+  // 상태가 바뀌면 그 때 백엔드로 요청을 보낼 수 있게 로직을 나누었습니다.
+  useEffect(() => {
+    if (currentPage > 0) loadProduct();
+  }, [currentPage]);
 
   // 상품 목록을 백엔드에 요청하는 함수
   const loadProduct = async () => {
+    // 아직 로딩 중이라면 or 이미 마지막 페이지라면 더이상 진행하지 말아라.
+    if (isLoading || isLastPage) return;
+
     let params = {
       size: pageSize,
-      number: currentPage,
+      page: currentPage,
     };
 
-    const res = await axios.get(
-      `${process.env.REACT_APP_API_BASE_URL}/product/list`,
-      { params },
-    );
-    const data = res.data;
-    console.log(data.result);
+    setIsLoading(true);
 
-    const additionalData = data.result.content.map((p) => ({
-      ...p,
-      quantity: 0,
-    }));
+    try {
+      const res = await axios.get(
+        `${process.env.REACT_APP_API_BASE_URL}/product/list`,
+        { params },
+      );
+      const data = res.data;
+      console.log(data.result);
 
-    if (additionalData.length === 0) {
-      setLastPage(true);
-    } else {
-      setProductList((prevList) => [...prevList, ...additionalData]);
-      setCurrentPage((prevPage) => prevPage + 1);
+      const additionalData = data.result.content.map((p) => ({
+        ...p,
+        quantity: 0,
+      }));
+
+      if (additionalData.length === 0) {
+        setLastPage(true);
+      } else {
+        setProductList((prevList) => [...prevList, ...additionalData]);
+      }
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const scrollPagination = () => {
-    // 브라우저 창의 높이 + 현재 스크롤된 위치 >= 페이지 전체 높이에서 200px 이내에 도달했는가?
+    // 브라우저 창의 높이 + 현재 페이지에서 스크롤 된 픽셀 값
+    //>= (스크롤이 필요 없는)페이지 전체 높이에서 100px 이내에 도달했는가?
     const isBottom =
-      window.innerHeight + window.scrollY >= document.body.offsetHeight - 200;
-    if (isBottom && !isLastPage) {
-      loadProduct();
+      window.innerHeight + document.documentElement.scrollTop >=
+      document.documentElement.scrollHeight - 100;
+    if (isBottom && !isLastPage && !isLoading) {
+      // 스크롤이 특정 구간에 도달하면 바로 요청 보내는 게 아니라 다음 페이지 번호를 준비하겠다.
+      setCurrentPage((prevPage) => prevPage + 1);
     }
   };
 
