@@ -16,6 +16,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import axiosInstance from '../configs/axios-config';
 import AuthContext from '../context/UserContext';
 import { useNavigate } from 'react-router-dom';
+import { handleAxiosError } from '../configs/HandleAxiosError';
 
 const OrderListComponent = ({ isAdmin }) => {
   const [orderList, setOrderList] = useState([]);
@@ -62,6 +63,7 @@ const OrderListComponent = ({ isAdmin }) => {
         setOrderList(res.data.result);
       } catch (e) {
         console.log(e);
+        handleAxiosError(e, onLogout, navigate);
       }
     };
 
