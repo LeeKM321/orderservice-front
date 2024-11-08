@@ -7,14 +7,17 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material';
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/UserContext';
 import { EventSourcePolyfill } from 'event-source-polyfill';
+import { NotificationAdd } from '@mui/icons-material';
 
 const Header = () => {
   const { isLoggedIn, onLogout, userRole } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [liveQuantity, setLiveQuantity] = useState(0); // 실시간 주문 수
+  const [message, setMessage] = useState('');
 
   const handleLogout = () => {
     onLogout();
@@ -46,6 +49,13 @@ const Header = () => {
         console.log('Received heartbeat');
       });
 
+      sse.addEventListener('ordered', (event) => {
+        const orderData = JSON.parse(event.data);
+        console.log(orderData);
+        setLiveQuantity((prev) => prev + 1);
+        setMessage(orderData.userEmail + '님의 주문!');
+      });
+
       sse.onerror = (error) => {
         console.error(error);
         sse.close();
@@ -73,7 +83,7 @@ const Header = () => {
                     상품관리
                   </Button>
                   <Button color='inherit' href='/order/list'>
-                    실시간주문 ()
+                    실시간주문 <NotificationAdd /> ({liveQuantity}) {message}
                   </Button>
                 </>
               )}
