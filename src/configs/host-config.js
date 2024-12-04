@@ -3,6 +3,8 @@ const clientHostName = window.location.hostname;
 
 let backendHostName; // 백엔드 서버 호스트 이름
 
+console.log('clientHostName: ', clientHostName);
+
 /*
  리액트 프로젝트의 개발 중 ip는 localhost 입니다. -> 백엔드도 localhost로 작업 중일 것이다.
  하지만, 나중에는 서비스를 위해 도메인을 구입할 것입니다. -> 백엔드의 주소도 달라질 수 있다.
@@ -13,8 +15,9 @@ let backendHostName; // 백엔드 서버 호스트 이름
 if (clientHostName === 'localhost') {
   // 개발 중
   backendHostName = 'http://localhost:8181';
-} else if (clientHostName === 'http://playdatashop8917.shop') {
+} else if (clientHostName === 'playdatashop8917.shop') {
   // 배포해서 현재 서비스 중
+  console.log('배포해서 현재 서비스 중!');
   backendHostName = 'http://43.203.176.172:8000';
 }
 
