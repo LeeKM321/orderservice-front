@@ -18,7 +18,7 @@ if (clientHostName === 'localhost') {
 } else if (clientHostName === 'playdatashop8917.shop') {
   // 배포해서 현재 서비스 중
   console.log('배포해서 현재 서비스 중!');
-  backendHostName = 'http://43.203.176.172:8000';
+  backendHostName = 'https://api.playdatashop8917.shop';
 }
 
 export const API_BASE_URL = backendHostName;
